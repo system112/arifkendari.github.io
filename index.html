@@ -1,1 +1,365 @@
-halo
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hacker Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        } 
+
+        body {
+            background: #000;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Matrix Rain Background */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            opacity: 0.3;
+        }
+
+        /* Terminal Container */
+        .terminal-container {
+            position: relative;
+            z-index: 2;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        /* Terminal Window */
+        .terminal {
+            width: 80%;
+            max-width: 800px;
+            height: 60%;
+            background: #000;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            box-shadow: 0 0 20px #00ff00;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .terminal-header {
+            color: #00ff00;
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .terminal-content {
+            color: #00ff00;
+            font-size: 14px;
+            line-height: 1.5;
+            height: calc(100% - 60px);
+            overflow-y: auto;
+        }
+
+        .command-line {
+            margin-bottom: 10px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .prompt {
+            color: #ff0000;
+            text-shadow: 0 0 5px #ff0000;
+        }
+
+        .cursor {
+            background: #00ff00;
+            animation: blink 1s infinite;
+        }
+
+        /* Glitch Effect */
+        .glitch {
+            position: relative;
+            color: #00ff00;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glitch::before {
+            animation: glitch-1 0.5s infinite;
+            color: #ff0000;
+            z-index: -1;
+        }
+
+        .glitch::after {
+            animation: glitch-2 0.5s infinite;
+            color: #0000ff;
+            z-index: -2;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes blink {
+            0%, 50% {
+                opacity: 1;
+            }
+            51%, 100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes glitch-1 {
+            0%, 14%, 15%, 49%, 50%, 99%, 100% {
+                transform: translate(0);
+            }
+            15%, 49% {
+                transform: translate(-2px, -1px);
+            }
+        }
+
+        @keyframes glitch-2 {
+            0%, 20%, 21%, 62%, 63%, 99%, 100% {
+                transform: translate(0);
+            }
+            21%, 62% {
+                transform: translate(2px, 1px);
+            }
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #ff0000);
+            width: 0%;
+            animation: loading 3s ease-in-out infinite;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; }
+            50% { width: 100%; }
+            100% { width: 0%; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .terminal {
+                width: 95%;
+                height: 70%;
+                padding: 15px;
+            }
+            
+            .terminal-content {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix Rain Canvas -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- Terminal Interface -->
+    <div class="terminal-container">
+        <div class="terminal">
+            <div class="glitch" data-text="SYSTEM BREACH DETECTED">SYSTEM BREACH DETECTED</div>
+            
+            <div class="progress-container">
+                <div class="progress-bar"></div>
+            </div>
+            
+            <div class="terminal-header">
+                ╔══════════════════════════════════════╗<br>
+                ║          HACKER TERMINAL v2.1        ║<br>
+                ╚══════════════════════════════════════╝
+            </div>
+            
+            <div class="terminal-content" id="terminal-output">
+                <!-- Content will be generated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Rain Effect
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
+        const matrixArray = matrix.split("");
+
+        const fontSize = 10;
+        const columns = canvas.width / fontSize;
+
+        const drops = [];
+        for(let x = 0; x < columns; x++) {
+            drops[x] = 1;
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#00ff00';
+            ctx.font = fontSize + 'px monospace';
+
+            for(let i = 0; i < drops.length; i++) {
+                const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 35);
+
+        // Terminal Animation
+        const terminalOutput = document.getElementById('terminal-output');
+        const commands = [
+            { prompt: "root@hacker:~$", command: "nmap -sS 192.168.1.0/24", delay: 1000 },
+            { prompt: "root@hacker:~$", command: "Starting Nmap 7.80 scan...", delay: 1500 },
+            { prompt: "", command: "Host is up (0.00050s latency).", delay: 800 },
+            { prompt: "", command: "PORT     STATE SERVICE", delay: 600 },
+            { prompt: "", command: "22/tcp   open  ssh", delay: 400 },
+            { prompt: "", command: "80/tcp   open  http", delay: 400 },
+            { prompt: "", command: "443/tcp  open  https", delay: 400 },
+            { prompt: "root@hacker:~$", command: "hydra -l admin -P passwords.txt ssh://192.168.1.100", delay: 1200 },
+            { prompt: "", command: "Hydra v9.1 starting at " + new Date().toLocaleTimeString(), delay: 800 },
+            { prompt: "", command: "[22][ssh] host: 192.168.1.100   login: admin   password: admin123", delay: 1000 },
+            { prompt: "", command: "1 of 1 target successfully completed, 1 valid password found", delay: 800 },
+            { prompt: "root@hacker:~$", command: "ssh admin@192.168.1.100", delay: 1000 },
+            { prompt: "", command: "admin@192.168.1.100's password: ", delay: 500 },
+            { prompt: "", command: "Last login: " + new Date().toDateString(), delay: 800 },
+            { prompt: "admin@target:~$", command: "whoami", delay: 600 },
+            { prompt: "", command: "admin", delay: 400 },
+            { prompt: "admin@target:~$", command: "sudo -l", delay: 800 },
+            { prompt: "", command: "User admin may run the following commands:", delay: 600 },
+            { prompt: "", command: "    (ALL : ALL) ALL", delay: 400 },
+            { prompt: "admin@target:~$", command: "sudo cat /etc/shadow", delay: 1000 },
+            { prompt: "", command: "root:$6$xyz$encrypted_password_hash...", delay: 600 },
+            { prompt: "", command: "admin:$6$abc$another_encrypted_hash...", delay: 400 },
+            { prompt: "admin@target:~$", command: "echo 'ACCESS GRANTED - SYSTEM COMPROMISED'", delay: 1200 },
+            { prompt: "", command: "ACCESS GRANTED - SYSTEM COMPROMISED", delay: 800 },
+            { prompt: "admin@target:~$", command: "exit", delay: 1000 },
+            { prompt: "root@hacker:~$", command: "echo 'Mission Complete!'", delay: 800 },
+            { prompt: "", command: "Mission Complete!", delay: 1000 }
+        ];
+
+        let commandIndex = 0;
+        let charIndex = 0;
+        let currentLine = null;
+
+        function typeCommand() {
+            if (commandIndex >= commands.length) {
+                // Restart animation
+                setTimeout(() => {
+                    terminalOutput.innerHTML = '';
+                    commandIndex = 0;
+                    charIndex = 0;
+                    typeCommand();
+                }, 3000);
+                return;
+            }
+
+            const currentCommand = commands[commandIndex];
+            
+            if (charIndex === 0) {
+                currentLine = document.createElement('div');
+                currentLine.className = 'command-line';
+                currentLine.style.animationDelay = '0s';
+                terminalOutput.appendChild(currentLine);
+                
+                if (currentCommand.prompt) {
+                    const promptSpan = document.createElement('span');
+                    promptSpan.className = 'prompt';
+                    promptSpan.textContent = currentCommand.prompt + ' ';
+                    currentLine.appendChild(promptSpan);
+                }
+            }
+
+            if (charIndex < currentCommand.command.length) {
+                const char = currentCommand.command[charIndex];
+                currentLine.innerHTML += char;
+                charIndex++;
+                
+                // Add cursor
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                cursor.innerHTML = '█';
+                currentLine.appendChild(cursor);
+                
+                setTimeout(() => {
+                    cursor.remove();
+                    typeCommand();
+                }, Math.random() * 100 + 50);
+            } else {
+                charIndex = 0;
+                commandIndex++;
+                
+                // Scroll to bottom
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                
+                setTimeout(typeCommand, currentCommand.delay);
+            }
+        }
+
+        // Start terminal animation after a short delay
+        setTimeout(typeCommand, 2000);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Add some random glitch effects
+        setInterval(() => {
+            const glitchElement = document.querySelector('.glitch');
+            glitchElement.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;
+            setTimeout(() => {
+                glitchElement.style.transform = 'translate(0, 0)';
+            }, 100);
+        }, 3000);
+    </script>
+</body>
+</html>
